@@ -1,5 +1,7 @@
 # AGENTS
 
+## Goal
+
 You are building a "Full Stack" application where the frontend (Observable) runs in the browser but is served by a container, and the backend (Julia) runs purely as an API service.
 
 Here is an implementation plan, including the **Project Structure**, the **Code**, and **Debugging Toolbox**.
@@ -9,10 +11,38 @@ The app is split into two separate containers managed by `docker-compose`.
 1. **Frontend Container:** A web server that serves the UI.
 2. **Worker Container:** A Julia environment waiting for commands.
 
-* **The Flow:**
+## Layout, data and flow
+
+### The Flow
+
+0. User select (click on) tasks in the `TODO-Now` and `TODO-Upcoming`.
 1. User clicks "Submit" on Frontend.
 2. Frontend sends an HTTP request (or puts a message in a queue like Redis) to the Worker.
 3. Worker (Julia) receives the signal, runs the task, updates the git repo, and responds "Done".
+
+### The Dashboard layout
+
+- Top row: Tasks of TODO-Now
+- middle row: Tasks of TODO-Upcoming
+- middle-right: A "submit" button.
+- bottom row: A diagram with x axis the date time and a categorical y axis for all recurrent tasks, showing the visualization of scheduled tasks within a one-year scope.
+
+### Data
+
+`todo.yaml` columns:
+- **TaskName:** E.g, "mop the floor", "clean toilet".
+- **RecurrentPeriod:** The period when a task revives. E.g., 1 week for "clean toilet".
+- **LeadingTime:** The time window within which the status changed to "upcoming" from "done". E.g., 2 days for "clean toilet"
+- **Status:** "due" (to show on the TODO-Now panel), "upcoming" (to show on the TODO-Upcoming panel), and "done".
+
+`done_log.csv` columns:
+- **TaskName**
+- **DoneAt:** When the task was done at `Date`.
+
+### Explained with an example
+
+For "clean toilet" that has a recurrent time of 1 week,
+when the user select it on either TODO-Now or TODO-Upcoming panel and submit, the `todo.yaml` updates the field `clean_toilet.Status` from "due" or "upcoming" to "done", and note the time at `DoneAt` in `done_log.csv`.
 
 
 
@@ -24,7 +54,7 @@ The app is split into two separate containers managed by `docker-compose`.
 ├── .env                        # Environment variables (optional)
 ├── dev_toolbox.sh              # <--- YOUR NEW DEBUGGING TOOLBOX
 ├── data/                       # Shared Data Volume
-│   ├── todo.csv
+│   ├── todo.yaml
 │   └── done_log.csv
 ├── worker/                     # Julia Backend
 │   ├── Dockerfile
@@ -302,7 +332,7 @@ esac
 ```
 
 
-### How to use:
+## How to use:
 
 1. **Run `./dev_toolbox.sh` and pick Option 1.**
 * Open `http://localhost:3000`. You see your dashboard.
